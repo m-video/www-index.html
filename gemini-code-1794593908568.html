@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Navegador Web</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    body { display: flex; flex-direction: column; height: 100vh; background: #1e1e2e; color: #cdd6f4; overflow: hidden; }
+    
+    /* Barra de herramientas */
+    .toolbar {
+      display: flex; align-items: center; gap: 6px; padding: 8px;
+      background: #181825; border-bottom: 1px solid #313244;
+    }
+    .btn {
+      background: #313244; color: #cdd6f4; border: none; border-radius: 6px;
+      width: 36px; height: 36px; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn:active { background: #45475a; }
+    
+    .url-bar {
+      flex: 1; height: 36px; padding: 0 12px; border-radius: 18px;
+      border: 1px solid #45475a; background: #11111b; color: #fff;
+      font-size: 14px; outline: none;
+    }
+    .url-bar:focus { border-color: #89b4fa; }
+    
+    .go-btn {
+      background: #89b4fa; color: #11111b; font-weight: bold;
+      padding: 0 14px; width: auto;
+    }
+
+    /* Marcadores rápidos */
+    .bookmarks {
+      display: flex; gap: 8px; padding: 6px 10px; background: #181825;
+      font-size: 12px; overflow-x: auto; border-bottom: 1px solid #313244;
+    }
+    .chip {
+      background: #313244; padding: 4px 10px; border-radius: 12px;
+      cursor: pointer; white-space: nowrap; user-select: none;
+    }
+    .chip:hover { background: #45475a; }
+
+    /* Contenedor del visor */
+    .viewport { flex: 1; position: relative; background: #fff; }
+    iframe { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <button class="btn" onclick="irAtras()" title="Atrás">&#8592;</button>
+    <button class="btn" onclick="irAdelante()" title="Adelante">&#8594;</button>
+    <button class="btn" onclick="recargar()" title="Recargar">&#8635;</button>
+    <input type="text" id="urlInput" class="url-bar" placeholder="Ingresa una URL o busca en la web..." value="https://es.wikipedia.org">
+    <button class="btn go-btn" onclick="navegar()">Ir</button>
+    <button class="btn" onclick="abrirNativo()" title="Modo Nativo Completo">&#8599;</button>
+  </div>
+
+  <div class="bookmarks">
+    <div class="chip" onclick="cargarDirecto('https://es.wikipedia.org')">Wikipedia</div>
+    <div class="chip" onclick="cargarDirecto('https://www.bing.com')">Buscador Bing</div>
+    <div class="chip" onclick="cargarDirecto('https://archive.org')">Internet Archive</div>
+    <div class="chip" onclick="cargarDirecto('https://duckduckgo.com')">DuckDuckGo</div>
+  </div>
+
+  <div class="viewport">
+    <iframe id="visor" src="https://es.wikipedia.org" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+  </div>
+
+  <script>
+    const visor = document.getElementById('visor');
+    const urlInput = document.getElementById('urlInput');
+    let historial = ["https://es.wikipedia.org"];
+    let indice = 0;
+
+    function formatearUrl(input) {
+      let texto = input.trim();
+      if (!texto) return "";
+      if (texto.startsWith('http://') || texto.startsWith('https://')) return texto;
+      if (texto.includes('.') && !texto.includes(' ')) return 'https://' + texto;
+      return 'https://www.bing.com/search?q=' + encodeURIComponent(texto);
+    }
+
+    function navegar() {
+      const urlFinal = formatearUrl(urlInput.value);
+      if (!urlFinal) return;
+      urlInput.value = urlFinal;
+      visor.src = urlFinal;
+      historial = historial.slice(0, indice + 1);
+      historial.push(urlFinal);
+      indice++;
+    }
+
+    function cargarDirecto(url) {
+      urlInput.value = url;
+      navegar();
+    }
+
+    function irAtras() {
+      if (indice > 0) {
+        indice--;
+        visor.src = historial[indice];
+        urlInput.value = historial[indice];
+      }
+    }
+
+    function irAdelante() {
+      if (indice < historial.length - 1) {
+        indice++;
+        visor.src = historial[indice];
+        urlInput.value = historial[indice];
+      }
+    }
+
+    function recargar() {
+      visor.src = visor.src;
+    }
+
+    // Si un sitio bloquea iframes (como Google o YouTube), el botón ↗ lo abre directo en el WebView nativo del APK
+    function abrirNativo() {
+      const urlFinal = formatearUrl(urlInput.value);
+      if (urlFinal) window.location.href = urlFinal;
+    }
+
+    urlInput.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') navegar();
+    });
+  </script>
+</body>
+</html>
